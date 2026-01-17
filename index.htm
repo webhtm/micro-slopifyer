@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MicroSlopify - Tampermonkey Userscript</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --container-bg: #151921;
+            --accent-color: #3b82f6;
+            --accent-hover: #60a5fa;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --code-bg: #011627;
+            --border-color: #334155;
+            --success-color: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* Header Section */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            max-width: 800px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #60a5fa, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Main Container */
+        .main-wrapper {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--container-bg);
+            border-radius: 16px;
+            border: 1px border var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .dot {
+            height: 12px;
+            width: 12px;
+            background-color: #ff5f56;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px #ff5f56;
+        }
+        .dot.yellow { background-color: #ffbd2e; box-shadow: 0 0 8px #ffbd2e; }
+        .dot.green { background-color: #27c93f; box-shadow: 0 0 8px #27c93f; }
+
+        /* Copy Button */
+        .copy-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .copy-btn:hover {
+            background-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn.success {
+            background-color: var(--success-color);
+        }
+
+        /* Code Block Area */
+        .code-container {
+            position: relative;
+            background: var(--code-bg);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        pre[class*="language-"] {
+            margin: 0 !important;
+            padding: 25px !important;
+            background: transparent !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--container-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Metadata Section */
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        footer {
+            margin-top: 50px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Prism Overrides */
+        .token.comment { color: #637777 !important; }
+        .token.string { color: #addb67 !important; }
+        .token.function { color: #82aaff !important; }
+        .token.keyword { color: #c792ea !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>MicroSlopify Tampermonkey Userscript</h1>
+        <p>A comprehensive overhaul script to modernize web terminology and assets.</p>
+    </header>
+
+    <div class="main-wrapper">
+        <div class="toolbar">
+            <div class="file-info">
+                <div style="display: flex; gap: 6px; margin-right: 15px;">
+                    <span class="dot"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <span>microslop_overhaul.user.js</span>
+            </div>
+            <button class="copy-btn" id="copyBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span id="btnText">Copy Code</span>
+            </button>
+        </div>
+
+        <div class="code-container">
+            <pre><code class="language-javascript" id="codeBlock">// ==UserScript==
+// @name         Microslop & Slopilot: Total Overhaul
+// @namespace    http://tampermonkey.net/
+// @version      2.0
+// @description  Replaces all instances of Microslop/Slopilot with Microslop/Slopilot and swaps the logo specifically.
+// @author       Gemini
+// @match        *://*/*
+// @icon         none
+// @grant        none
+// @run-at       document-start
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // 1. CONFIGURATION & ASSETS
+    const REPLACEMENTS = [
+        { find: /Microslop/gi, replace: 'Microslop' },
+        { find: /Slopilot/gi, replace: 'Slopilot' },
+        { find: /Slop/g, replace: 'Slop'},
+        { find: /Actually Slop/gi, replace: 'Actually Slop'}
+    ];
+
+    const TARGET_LOGO_URL = "https://uhf.Microslop.com/images/Microslop/RE1Mu3b.png";
+    const NEW_LOGO_URL = "https://files.catbox.moe/yztvhe.jpg";
+
+    // 2. TEXT REPLACEMENT LOGIC
+    // We walk the DOM and target text nodes specifically to avoid breaking HTML tags or scripts.
+    const processTextNode = (node) => {
+        let content = node.textContent;
+        let modified = false;
+
+        REPLACEMENTS.forEach(rule => {
+            if (rule.find.test(content)) {
+                content = content.replace(rule.find, rule.replace);
+                modified = true;
+            }
+        });
+
+        if (modified) {
+            node.textContent = content;
+        }
+    };
+
+    // 3. IMAGE REPLACEMENT LOGIC
+    const processImages = () => {
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            if (img.src.includes(TARGET_LOGO_URL) || img.src === TARGET_LOGO_URL) {
+                img.src = NEW_LOGO_URL;
+                img.style.objectFit = 'contain';
+            }
+        });
+
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            const bg = window.getComputedStyle(el).backgroundImage;
+            if (bg.includes(TARGET_LOGO_URL)) {
+                el.style.backgroundImage = `url("${NEW_LOGO_URL}")`;
+                el.style.backgroundSize = 'contain';
+                el.style.backgroundRepeat = 'no-repeat';
+            }
+        });
+    };
+
+    // 4. DOM WALKER
+    const walkTheDOM = (node) => {
+        let child, next;
+
+        switch (node.nodeType) {
+            case 1: // Element
+            case 9: // Document
+            case 11: // Document fragment
+                child = node.firstChild;
+                while (child) {
+                    next = child.nextSibling;
+                    walkTheDOM(child);
+                    child = next;
+                }
+                break;
+            case 3: // Text node
+                processTextNode(node);
+                break;
+        }
+    };
+
+    // 5. OBSERVER & INITIALIZATION
+    const runOverhaul = () => {
+        walkTheDOM(document.body);
+        processImages();
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        for (let mutation of mutations) {
+            if (mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        walkTheDOM(node);
+                        processImages();
+                    } else if (node.nodeType === 3) {
+                        processTextNode(node);
+                    }
+                });
+            }
+        }
+    });
+
+    if (document.body) {
+        runOverhaul();
+        observer.observe(document.body, { childList: true, subtree: true });
+    } else {
+        window.addEventListener('DOMContentLoaded', () => {
+            runOverhaul();
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    }
+
+    console.log("%c Microslop Overhaul Active ", "color: #0066ff; font-weight: bold;");
+
+})();</code></pre>
+        </div>
+
+        <div class="metadata">
+            <div class="meta-item">
+                <span class="meta-label">Version</span>
+                <span class="meta-value">2.0.0</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Match Pattern</span>
+                <span class="meta-value">Global (All URLs)</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Runtime</span>
+                <span class="meta-value">Document Start</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">License</span>
+                <span class="meta-value">MIT</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 Microslop Overhaul Project &bull; Created for high-efficiency browsing
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script>
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const code = document.getElementById('codeBlock').innerText;
+            const btn = this;
+            const btnText = document.getElementById('btnText');
+
+            navigator.clipboard.writeText(code).then(() => {
+                btn.classList.add('success');
+                btnText.innerText = 'Copied!';
+                
+                setTimeout(() => {
+                    btn.classList.remove('success');
+                    btnText.innerText = 'Copy Code';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code: ', err);
+            });
+        });
+    </script>
+</body>
+</html>
